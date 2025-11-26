@@ -1,31 +1,53 @@
 export default async function handler(req, res) {
+  // CORS ayarları (Shopify sayfasından çağırabilelim diye)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
     const { prompt } = req.body;
 
-    const aiResponse = await fetch("https://api.openai.com/v1/images/edits", {
-      method: "POST",
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    const aiResponse = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
+        model: 'gpt-image-1',
         prompt,
-        size: "1024x1024"
-      })
+        size: '1024x1024',
+      }),
     });
 
     const data = await aiResponse.json();
 
-    if (!data || !data.data) {
-      return res.status(500).json({ error: "OpenAI response error", details: data });
+    if (!aiResponse.ok) {
+      console.error('OpenAI error:', data);
+      return res.status(500).json({ error: 'OpenAI response error', details: data });
     }
 
-    return res.status(200).json({ image_url: data.data[0].url });
+    const imageUrl = data?.data?.[0]?.url;
 
+    if (!imageUrl) {
+      return res.status(500).json({ error: 'No image URL returned from OpenAI', details: data });
+    }
+
+    return res.status(200).json({ image_url: imageUrl });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "AI generation failed" });
+    return res.status(500).json({ error: 'AI generation failed' });
   }
 }
-
-
