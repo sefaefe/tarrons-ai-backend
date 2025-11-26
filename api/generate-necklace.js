@@ -1,19 +1,21 @@
 export default async function handler(req, res) {
-  // Sadece POST isteklerine izin veriyoruz
+  // Sadece POST isteklerine izin verelim
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const { base_image, necklace_text, metal_color, prompt } = req.body || {};
+    // Shopify tarafının gönderdiği değerler
+    const { necklace_text, metal_color, prompt } = req.body;
 
-    // Güvenlik: prompt yoksa kendimiz oluşturuyoruz
+    // Eğer frontend özel bir prompt yollamadıysa burda kendimiz oluşturuyoruz
     const finalPrompt =
       prompt ||
-      `Ultra realistic studio shot of a premium 925 silver name necklace that says "${necklace_text ||
-        "Tarrons"}" in ${metal_color || "silver"} color on a clean light background. Luxury, minimal, high-end jewelry photography, soft lighting.`;
+      `White background, 9:16 ratio, high-end product photo of a minimalist ${metal_color ||
+        "silver"} name necklace that says "${necklace_text ||
+        "Emily"}" in elegant cursive script, centered, for a jewelry ecommerce website.`;
 
-    // 🔥 Gerçek OpenAI isteği (image generation)
+    // 🔥 Yeni OpenAI image endpoint (gpt-image-1)
     const aiResponse = await fetch(
       "https://api.openai.com/v1/images/generations",
       {
@@ -26,18 +28,19 @@ export default async function handler(req, res) {
           model: "gpt-image-1",
           prompt: finalPrompt,
           size: "1024x1024",
+          n: 1,
         }),
       }
     );
 
     const data = await aiResponse.json();
 
-    // OpenAI bir hata dönerse
+    // OpenAI tarafında hata varsa loglayalım ve geri dönelim
     if (!aiResponse.ok) {
       console.error("OpenAI error:", data);
       return res
         .status(500)
-        .json({ error: "OpenAI response error", details: data });
+        .json({ error: "OpenAI error", details: data });
     }
 
     const imageUrl = data?.data?.[0]?.url;
@@ -46,13 +49,14 @@ export default async function handler(req, res) {
       console.error("No image URL in OpenAI response:", data);
       return res
         .status(500)
-        .json({ error: "No image URL returned from OpenAI" });
+        .json({ error: "No image URL in response", details: data });
     }
 
-    // Shopify frontend'in beklediği format: { image_url: "..." }
+    // Frontend’e URL’yi gönder
     return res.status(200).json({ image_url: imageUrl });
   } catch (err) {
-    console.error("AI generation failed:", err);
+    console.error("Server error:", err);
     return res.status(500).json({ error: "AI generation failed" });
   }
 }
+
