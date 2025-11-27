@@ -39,7 +39,7 @@ Close-up shot on a realistic female model's neck and chest, vertical 9:16, soft 
     const response = await client.images.generate({
       model: "gpt-image-1",
       prompt,
-      size: "1024x1792", // dikey 9:16
+      size: "1024x1536", // dikey 9:16
       n: 1,
     });
 
