@@ -1,3 +1,31 @@
+async function selectBestModel(imageBase64) {
+  const analysis = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: "You are an image expert. Your job is to compare the user's face image with 3 model images and choose which model has the closest angle, skin tone and face structure."
+      },
+      {
+        role: "user",
+        content: [
+          { type: "input_text", text: "Select the best matching model: model1, model2 or model3" },
+          { type: "input_image", image_url: imageBase64 },
+          { type: "input_image", image_url: "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model1.jpg" },
+          { type: "input_image", image_url: "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model2.jpg" },
+          { type: "input_image", image_url: "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model3.jpg" }
+        ]
+      }
+    ]
+  });
+
+  const choice = analysis.choices?.[0]?.message?.content?.trim().toLowerCase();
+  
+  if (choice.includes("model2")) return "model2.jpg";
+  if (choice.includes("model3")) return "model3.jpg";
+  return "model1.jpg"; // default
+}
+
 // api/generate-necklace.js
 
 import OpenAI from "openai";
