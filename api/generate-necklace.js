@@ -117,50 +117,30 @@ export default async function handler(req, res) {
     const modelImageUrl = `https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/${bestModel}`;
 
     // 3) Necklace render için prompt
-    const prompt = `
-You are an expert in high-end, photorealistic portrait retouching and jewelry compositing.
+        const prompt = `
+A 9:16 vertical, high-end studio beauty portrait of a woman, in the style of a luxury jewelry campaign.
 
-GOAL:
-Create a 9:16 vertical studio portrait where:
-- The BODY, neck, clothes, pose, angle and lighting come from the MODEL PHOTO.
-- The FACE comes from the USER PHOTO.
-- A small, minimal, realistic name necklace is added on the neck with the text: "${necklaceText}".
-- The metal color of the necklace must clearly look like real ${metalColor} (polished, premium, realistic).
+POSE & COMPOSITION:
+- The pose, camera angle, framing and background should closely match this reference model photo: ${modelImageUrl}.
+- Fashion / jewelry campaign look, not an ID or passport photo.
+- Slight 3/4 angle or soft front view, relaxed shoulders.
+- Soft depth of field: eyes sharp, background slightly blurred.
 
-SOURCE IMAGES:
-- MODEL PHOTO (base image): ${modelImageUrl}
+APPEARANCE:
+- Elegant female model, natural but polished makeup.
+- Skin tone, hair style and overall vibe should feel similar to the reference model photo.
+- High-end, premium look, like a real professional model shoot.
 
-DETAILED INSTRUCTIONS:
+NECKLACE:
+- Minimal 925 sterling silver name necklace that says "${necklaceText}" in ${metalColor} color metal.
+- Thin, delicate chain that follows the curve of the neck naturally.
+- Small, elegant letters, realistic metal reflections, luxury jewelry photography.
 
-1. BASE IMAGE
-- Use the MODEL PHOTO as the full base.
-- Keep the composition, camera angle, framing and background exactly the same.
-- Do NOT crop tighter than the original model photo.
-- Final output must be 9:16 vertical, clean studio look.
-
-2. FACE SWAP
-- Replace ONLY the model's face with the USER PHOTO face.
-- Keep the model's hair, neck, jawline position, clothes and body shape.
-- Match skin tone between face and neck so they look like the same person.
-- Preserve realistic skin texture, pores and natural details.
-- Avoid warping, melting, doubling of eyes, nose or lips.
-- Make sure both eyes are sharp and looking in a natural direction.
-
-3. NECKLACE
-- Add a minimal, elegant name necklace on the neck.
-- The necklace text must read EXACTLY: "${necklaceText}".
-- Use a thin, realistic chain that follows the curve of the neck and collarbone.
-- Pendant / letters should be small and subtle, not oversized or cartoonish.
-- Metal must look like real ${metalColor} jewelry with soft, premium reflections.
-- Style: luxury jewelry photography, ultra realistic, no heavy glow or fake effects.
-
-4. OVERALL LOOK
-- High-end studio lighting: soft, flattering, no harsh noise or artifacts.
-- Keep colors natural and skin tones believable.
-- No extra text, logos or watermarks in the image.
-- Output: one final edited portrait image, 9:16 aspect ratio.
-`.trim();
-
+LIGHTING & QUALITY:
+- Soft studio lighting, no harsh shadows, no flash look.
+- Ultra realistic, photographic quality, not illustration.
+- 9:16 vertical aspect ratio, clean background, no extra text or logos.
+    `.trim();
 
 
     const response = await client.images.generate({
