@@ -41,7 +41,7 @@ photographed on a realistic model similar to the uploaded photo, vertical 9:16, 
 
     // Replicate modelini çalıştır
     const output = await replicate.run(
-      "black-forest-labs/flux-schnell",
+      "black forest gateau cake spelling out the words \"FLUX 1 . 1 Pro\", tasty, food photography",
       {
         input: {
           prompt,
