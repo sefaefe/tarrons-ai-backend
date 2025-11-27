@@ -17,25 +17,37 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt } = req.body || {};
+    const { imageBase64, necklaceText, metalColor } = req.body || {};
 
-    if (!prompt || typeof prompt !== "string") {
-      console.log("Bad request body:", req.body);
-      return res.status(400).json({ error: "Prompt is required" });
+    // Gelen body'yi loglayalım (debug için)
+    console.log("Request body:", req.body);
+
+    if (!imageBase64 || !necklaceText || !metalColor) {
+      return res.status(400).json({
+        error: "imageBase64, necklaceText ve metalColor zorunlu",
+      });
     }
 
+    // Prompt'u backend'de oluşturuyoruz
+    const prompt = `
+A high-end studio product photo of a 925 sterling silver name necklace that says "${necklaceText}" in ${metalColor} color,
+photographed on a realistic model similar to the uploaded photo, vertical 9:16, soft light, luxury jewelry style.
+    `.trim();
+
     const replicate = new Replicate({
-      // VERCEL'DEKİ ENV İSİM: REPLICATE_API_KEY OLMALI
+      // Vercel'de KEY ismi BÖYLE olmalı:
       auth: process.env.REPLICATE_API_KEY,
     });
 
-    // Ücretsiz/ucuz hızlı model
+    // Replicate modelini çalıştır
     const output = await replicate.run(
       "black-forest-labs/flux-schnell",
       {
         input: {
           prompt,
+          image: imageBase64,   // Kullanıcının yüklediği fotoğraf
           aspect_ratio: "9:16",
+          output_format: "webp",
         },
       }
     );
