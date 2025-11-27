@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
+        model: "gpt-image-1-mini",
         prompt,
         size: '1024x1024',
         n: 1,
