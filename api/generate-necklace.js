@@ -52,6 +52,11 @@ export default async function handler(req, res) {
 
   try {
     const { imageBase64, necklaceText, metalColor } = req.body || {};
+// En uygun modeli seç
+const bestModel = await selectBestModel(imageBase64);
+
+// Model URL'si
+const modelImageUrl = `https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/${bestModel}`;
 
     // 🟡 ADIM 2: BURAYA EKLİYORUZ
     console.log("📸 imageBase64 length:", imageBase64?.length);
@@ -67,16 +72,35 @@ export default async function handler(req, res) {
     }
 
     const prompt = `
-A high-end studio product photo of a 925 sterling silver name necklace that says "${necklaceText}" in ${metalColor} color metal.
-Close-up shot on a realistic female model's neck and chest, vertical 9:16, soft diffused light, luxury jewelry photography, ultra realistic, focus on the necklace, blurred background.
-    `.trim();
+You are an expert in photorealistic portrait image editing.
+
+Task:
+- Take the following model photo.
+- Replace ONLY the face with the user's face.
+- Keep the neck, clothes, camera angle, lighting exactly the same.
+- Then add a minimal, small, realistic necklace that says "${necklaceText}".
+- Metal color must be: ${metalColor}.
+- The necklace must be realistic, small, thin chain, high-end studio style.
+- Output must be 9:16 vertical.
+
+Model photo URL: ${modelImageUrl}
+User photo: <user_image>
+`;
+
 
     const response = await client.images.generate({
-      model: "gpt-image-1",
-      prompt,
-      size: "1024x1536",
-      n: 1,
-    });
+  model: "gpt-image-1",
+  prompt,
+  size: "1024x1536",
+  n: 1,
+  input_images: [
+    {
+      image: imageBase64,
+      id: "user_image"
+    }
+  ]
+});
+
 
     const b64 = response?.data?.[0]?.b64_json;
 
