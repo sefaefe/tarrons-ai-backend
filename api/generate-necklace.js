@@ -89,20 +89,50 @@ export default async function handler(req, res) {
 
     // 3) Necklace render için prompt
     const prompt = `
-You are an expert in photorealistic portrait image editing.
+You are an expert in high-end, photorealistic portrait retouching and jewelry compositing.
 
-Task:
-- Take the following model photo.
-- Replace ONLY the face with the user's face.
-- Keep the neck, clothes, camera angle, lighting exactly the same.
-- Then add a minimal, small, realistic necklace that says "${necklaceText}".
-- Metal color must be: ${metalColor}.
-- The necklace must be realistic, small, thin chain, high-end studio style.
-- Output must be 9:16 vertical.
+GOAL:
+Create a 9:16 vertical studio portrait where:
+- The BODY, neck, clothes, pose, angle and lighting come from the MODEL PHOTO.
+- The FACE comes from the USER PHOTO.
+- A small, minimal, realistic name necklace is added on the neck with the text: "${necklaceText}".
+- The metal color of the necklace must clearly look like real ${metalColor} (polished, premium, realistic).
 
-Model photo URL: ${modelImageUrl}
-User photo: <user_image>
-`;
+SOURCE IMAGES:
+- MODEL PHOTO (base image): ${modelImageUrl}
+- USER PHOTO: <user_image> (use ONLY for the face region)
+
+DETAILED INSTRUCTIONS:
+
+1. BASE IMAGE
+- Use the MODEL PHOTO as the full base.
+- Keep the composition, camera angle, framing and background exactly the same.
+- Do NOT crop tighter than the original model photo.
+- Final output must be 9:16 vertical, clean studio look.
+
+2. FACE SWAP
+- Replace ONLY the model's face with the USER PHOTO face.
+- Keep the model's hair, neck, jawline position, clothes and body shape.
+- Match skin tone between face and neck so they look like the same person.
+- Preserve realistic skin texture, pores and natural details.
+- Avoid warping, melting, doubling of eyes, nose or lips.
+- Make sure both eyes are sharp and looking in a natural direction.
+
+3. NECKLACE
+- Add a minimal, elegant name necklace on the neck.
+- The necklace text must read EXACTLY: "${necklaceText}".
+- Use a thin, realistic chain that follows the curve of the neck and collarbone.
+- Pendant / letters should be small and subtle, not oversized or cartoonish.
+- Metal must look like real ${metalColor} jewelry with soft, premium reflections.
+- Style: luxury jewelry photography, ultra realistic, no heavy glow or fake effects.
+
+4. OVERALL LOOK
+- High-end studio lighting: soft, flattering, no harsh noise or artifacts.
+- Keep colors natural and skin tones believable.
+- No extra text, logos or watermarks in the image.
+- Output: one final edited portrait image, 9:16 aspect ratio.
+`.trim();
+
 
 
     const response = await client.images.generate({
