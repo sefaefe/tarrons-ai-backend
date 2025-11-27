@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { necklaceText, metalColor } = req.body || {};
+    const { imageBase64, necklaceText, metalColor } = req.body || {};
 
     if (!necklaceText || !metalColor) {
       return res
