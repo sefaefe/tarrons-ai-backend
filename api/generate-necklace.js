@@ -100,7 +100,6 @@ Create a 9:16 vertical studio portrait where:
 
 SOURCE IMAGES:
 - MODEL PHOTO (base image): ${modelImageUrl}
-- USER PHOTO: <user_image> (use ONLY for the face region)
 
 DETAILED INSTRUCTIONS:
 
