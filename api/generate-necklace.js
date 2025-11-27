@@ -41,22 +41,17 @@ Close-up shot on a realistic female model's neck and chest, vertical 9:16, soft 
       prompt,
       size: "1024x1536", // dikey
       n: 1,
-      response_format: "url",
     });
 
-    const imageUrl =
-      response?.data?.[0]?.url ||
-      response?.data?.[0]?.image_url ||
-      null;
+    // kütüphane default olarak url döndürüyor
+    const imageUrl = response?.data?.[0]?.url;
 
     if (!imageUrl) {
       console.error("No image URL in OpenAI response:", response);
-      return res
-        .status(500)
-        .json({ error: "No image URL from OpenAI" });
+      return res.status(500).json({ error: "No image URL from OpenAI" });
     }
 
-    // 👇 ÖNEMLİ: frontend'in beklediği isim BU
+    // 🔥 FRONTEND İÇİN ÖNEMLİ: imageUrl (camelCase)
     return res.status(200).json({ imageUrl });
   } catch (err) {
     console.error("OpenAI image error:", err);
