@@ -1,60 +1,67 @@
 export default async function handler(req, res) {
   try {
-    const { prompt } = req.body;
+    // Body JSON gelmezse diye ekstra koruma
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
+    const { prompt } = body;
 
-    // 1) Prompt var mı ve string mi?
     if (!prompt || typeof prompt !== 'string') {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // 2) OpenAI API KEY var mı?
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is missing on server');
-      return res.status(500).json({ error: 'Server config error: missing OPENAI_API_KEY' });
-    }
-
-    // 3) OpenAI image endpointine istek
+    // OpenAI isteği
     const aiResponse = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        // 🔥 ENV'DEN API KEY
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model: "gpt-image-1",
         prompt,
         size: "1024x1024",
-        n: 1,
-      }),
+        n: 1
+      })
     });
 
-    // 4) HTTP status hatası
+    const text = await aiResponse.text();
+
+    // OpenAI hata verirse
     if (!aiResponse.ok) {
-      const errorText = await aiResponse.text().catch(() => "");
-      console.error('OpenAI HTTP error:', aiResponse.status, errorText);
+      console.error("OpenAI error status:", aiResponse.status);
+      console.error("OpenAI error body:", text);
+
       return res.status(500).json({
-        error: 'OpenAI HTTP error',
+        error: "openai_error",
         status: aiResponse.status,
-        details: errorText,
+        body: text
       });
     }
 
-    const data = await aiResponse.json();
-
-    // 5) Beklenen formatta data var mı?
-    if (!data || !data.data || !data.data[0] || !data.data[0].url) {
-      console.error('Unexpected OpenAI response structure:', data);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("JSON parse error:", e, text);
       return res.status(500).json({
-        error: 'Unexpected OpenAI response',
-        details: data,
+        error: "invalid_json_from_openai",
+        raw: text
       });
     }
 
-    // 6) Başarılı cevap
+    if (!data || !data.data || !data.data[0] || !data.data[0].url) {
+      console.error("Unexpected OpenAI response format:", data);
+      return res.status(500).json({
+        error: "unexpected_openai_response",
+        details: data
+      });
+    }
+
+    // Başarılı cevap
     return res.status(200).json({ image_url: data.data[0].url });
 
   } catch (err) {
-    console.error('AI generation failed:', err);
-    return res.status(500).json({ error: 'AI generation failed', details: String(err) });
+    console.error("AI generation failed:", err);
+    return res.status(500).json({ error: "AI generation failed" });
   }
 }
