@@ -39,13 +39,25 @@ Close-up shot on a realistic female model's neck and chest, vertical 9:16, soft 
     const response = await client.images.generate({
       model: "gpt-image-1",
       prompt,
-      size: "1024x1536", // dikey 9:16
+      size: "1024x1536", // dikey
       n: 1,
+      response_format: "url",
     });
 
-    const imageUrl = response.data[0].url;
+    const imageUrl =
+      response?.data?.[0]?.url ||
+      response?.data?.[0]?.image_url ||
+      null;
 
-    return res.status(200).json({ image_url: imageUrl });
+    if (!imageUrl) {
+      console.error("No image URL in OpenAI response:", response);
+      return res
+        .status(500)
+        .json({ error: "No image URL from OpenAI" });
+    }
+
+    // 👇 ÖNEMLİ: frontend'in beklediği isim BU
+    return res.status(200).json({ imageUrl });
   } catch (err) {
     console.error("OpenAI image error:", err);
     return res
