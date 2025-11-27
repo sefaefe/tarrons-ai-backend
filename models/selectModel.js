@@ -1,4 +1,7 @@
+// models/selectModel.js
+
+// Şimdilik çok basit: her zaman "model1" stilini döndür.
+// Sonra bunu akıllı hale getireceğiz (ten rengi, açı, vs.)
 export async function selectBestModel(imageBase64) {
-  // şimdilik sabit - sonra akıllı model seçme koyacağız
-  return "model1.jpg";
+  return "model1";
 }
