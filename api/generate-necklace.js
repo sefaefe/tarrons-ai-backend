@@ -8,49 +8,78 @@ const client = new OpenAI({
 
 // 1) Kullanıcının fotoğrafına göre model1 / model2 / model3 seç
 async function selectBestModel(imageBase64) {
-  const analysis = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are an image expert. Your job is to compare the user's face image with 3 model images and choose which model has the closest angle, skin tone and face structure.",
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: "Select the best matching model: model1, model2 or model3",
-          },
-          { type: "input_image", image_url: imageBase64 },
-          {
-            type: "input_image",
-            image_url:
-              "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model1.jpg",
-          },
-          {
-            type: "input_image",
-            image_url:
-              "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model2.jpg",
-          },
-          {
-            type: "input_image",
-            image_url:
-              "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model3.jpg",
-          },
-        ],
-      },
-    ],
-  });
+  try {
+    const analysis = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an image expert. Your job is to compare the user's face image with 3 model images and choose which model has the closest angle, skin tone and face structure.",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text:
+                "Look at the first image (user) and then the next 3 images (model1, model2, model3). Reply with ONLY ONE WORD: model1, model2 or model3.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageBase64, // data:image/...;base64,xxxx şeklinde geliyor
+              },
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url:
+                  "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model1.jpg",
+              },
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url:
+                  "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model2.jpg",
+              },
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url:
+                  "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model3.jpg",
+              },
+            },
+          ],
+        },
+      ],
+    });
 
-  const choice =
-    analysis.choices?.[0]?.message?.content?.trim().toLowerCase() || "";
+    // Cevap text'i çek
+    const msgContent = analysis.choices?.[0]?.message?.content;
+    let text = "";
 
-  if (choice.includes("model2")) return "model2.jpg";
-  if (choice.includes("model3")) return "model3.jpg";
-  return "model1.jpg"; // default
+    if (Array.isArray(msgContent)) {
+      const textPart = msgContent.find((p) => p.type === "text");
+      text = textPart?.text || "";
+    } else {
+      text = msgContent || "";
+    }
+
+    const choice = text.trim().toLowerCase();
+
+    if (choice.includes("model2")) return "model2.jpg";
+    if (choice.includes("model3")) return "model3.jpg";
+    return "model1.jpg"; // default
+  } catch (err) {
+    console.error("selectBestModel error:", err);
+    // Hata olursa sistem yine çalışsın, default model1
+    return "model1.jpg";
+  }
 }
+
 
 export default async function handler(req, res) {
   // CORS ayarları
