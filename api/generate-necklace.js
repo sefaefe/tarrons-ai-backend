@@ -1,31 +1,3 @@
-async function selectBestModel(imageBase64) {
-  const analysis = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content: "You are an image expert. Your job is to compare the user's face image with 3 model images and choose which model has the closest angle, skin tone and face structure."
-      },
-      {
-        role: "user",
-        content: [
-          { type: "input_text", text: "Select the best matching model: model1, model2 or model3" },
-          { type: "input_image", image_url: imageBase64 },
-          { type: "input_image", image_url: "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model1.jpg" },
-          { type: "input_image", image_url: "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model2.jpg" },
-          { type: "input_image", image_url: "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model3.jpg" }
-        ]
-      }
-    ]
-  });
-
-  const choice = analysis.choices?.[0]?.message?.content?.trim().toLowerCase();
-  
-  if (choice.includes("model2")) return "model2.jpg";
-  if (choice.includes("model3")) return "model3.jpg";
-  return "model1.jpg"; // default
-}
-
 // api/generate-necklace.js
 
 import OpenAI from "openai";
@@ -33,6 +5,52 @@ import OpenAI from "openai";
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// 1) Kullanıcının fotoğrafına göre model1 / model2 / model3 seç
+async function selectBestModel(imageBase64) {
+  const analysis = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an image expert. Your job is to compare the user's face image with 3 model images and choose which model has the closest angle, skin tone and face structure.",
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: "Select the best matching model: model1, model2 or model3",
+          },
+          { type: "input_image", image_url: imageBase64 },
+          {
+            type: "input_image",
+            image_url:
+              "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model1.jpg",
+          },
+          {
+            type: "input_image",
+            image_url:
+              "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model2.jpg",
+          },
+          {
+            type: "input_image",
+            image_url:
+              "https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/model3.jpg",
+          },
+        ],
+      },
+    ],
+  });
+
+  const choice =
+    analysis.choices?.[0]?.message?.content?.trim().toLowerCase() || "";
+
+  if (choice.includes("model2")) return "model2.jpg";
+  if (choice.includes("model3")) return "model3.jpg";
+  return "model1.jpg"; // default
+}
 
 export default async function handler(req, res) {
   // CORS ayarları
@@ -52,13 +70,7 @@ export default async function handler(req, res) {
 
   try {
     const { imageBase64, necklaceText, metalColor } = req.body || {};
-// En uygun modeli seç
-const bestModel = await selectBestModel(imageBase64);
 
-// Model URL'si
-const modelImageUrl = `https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/${bestModel}`;
-
-    // 🟡 ADIM 2: BURAYA EKLİYORUZ
     console.log("📸 imageBase64 length:", imageBase64?.length);
 
     if (!imageBase64) {
@@ -71,6 +83,11 @@ const modelImageUrl = `https://raw.githubusercontent.com/sefaefe/tarrons-ai-back
         .json({ error: "necklaceText ve metalColor zorunlu" });
     }
 
+    // 2) En uygun model fotoğrafını seç
+    const bestModel = await selectBestModel(imageBase64);
+    const modelImageUrl = `https://raw.githubusercontent.com/sefaefe/tarrons-ai-backend/main/${bestModel}`;
+
+    // 3) Necklace render için prompt
     const prompt = `
 You are an expert in photorealistic portrait image editing.
 
@@ -89,32 +106,22 @@ User photo: <user_image>
 
 
     const response = await client.images.generate({
-  model: "gpt-image-1",
-  prompt,
-  size: "1024x1536",
-  n: 1,
-  input_images: [
-    {
-      image: imageBase64,
-      id: "user_image"
-    }
-  ]
-});
-
+      model: "gpt-image-1",
+      prompt,
+      size: "1024x1536",
+      n: 1,
+    });
 
     const b64 = response?.data?.[0]?.b64_json;
 
     if (!b64) {
       console.error("No b64_json in OpenAI response:", response);
-      return res
-        .status(500)
-        .json({ error: "No image data from OpenAI" });
+      return res.status(500).json({ error: "No image data from OpenAI" });
     }
 
     const imageUrl = `data:image/png;base64,${b64}`;
 
     return res.status(200).json({ imageUrl });
-
   } catch (err) {
     console.error("OpenAI image error:", err);
     return res
